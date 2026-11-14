@@ -7,6 +7,9 @@ import {
   CursorDescriptor,
   resolveCursorDescriptor,
   lerpPoint,
+  resolveAssetPath,
+  INTRO_SPLASH_CONFIG,
+  computeSnakeLetterWave,
 } from '../utils/portfolioLogic';
 
 export function RohitBrandMark({ className = 'w-5 h-5' }: { className?: string }) {
@@ -336,7 +339,7 @@ export function EditorialPortraitCollage({
         </div>
         <div className="relative my-auto flex items-center gap-2 z-10">
           <img
-            src="/assets/rohit/rohit-portrait-clean.png"
+            src={resolveAssetPath('/assets/rohit/rohit-portrait-clean.png')}
             alt="Rohit Sahani classic portrait"
             referrerPolicy="no-referrer"
             className="w-11 h-14 rounded-lg object-cover object-top bg-[#09090b] border border-white/15 shrink-0"
@@ -387,7 +390,7 @@ export function EditorialPortraitCollage({
         )}`}
       >
         <img
-          src="/assets/rohit/rohit-portrait-suit.jpg"
+          src={resolveAssetPath('/assets/rohit/rohit-portrait-suit.jpg')}
           alt="Rohit Sahani editorial portrait in navy suit"
           referrerPolicy="no-referrer"
           className="w-full h-full object-cover object-[center_38%] scale-115"
@@ -421,7 +424,7 @@ export function ProjectArchitecturePreview({
     return (
       <div className="relative w-full h-full bg-[#0d0d11] text-white overflow-hidden select-none flex flex-col justify-between">
         <img
-          src={project.screenshotUrl}
+          src={resolveAssetPath(project.screenshotUrl)}
           alt={`${project.name} live interface screenshot`}
           referrerPolicy="no-referrer"
           className="absolute inset-0 w-full h-full object-cover object-center"
@@ -596,9 +599,10 @@ export function StaggeredLetters({
   text,
   className = '',
   delayOffset = 0,
-  stagger = 0.045,
+  stagger = 0.048,
   replayKey = 0,
-  once = false,
+  once = true,
+  paused = false,
 }: {
   text: string;
   className?: string;
@@ -606,11 +610,13 @@ export function StaggeredLetters({
   stagger?: number;
   replayKey?: number;
   once?: boolean;
+  paused?: boolean;
 }) {
   const containerRef = useRef<HTMLSpanElement | null>(null);
   const [inView, setInView] = useState<boolean>(false);
 
   useEffect(() => {
+    setInView(false);
     const el = containerRef.current;
     if (!el || typeof IntersectionObserver === 'undefined') {
       setInView(true);
@@ -625,39 +631,320 @@ export function StaggeredLetters({
           setInView(false);
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.12 }
     );
     observer.observe(el);
     return () => observer.disconnect();
   }, [once, replayKey]);
 
   const chars = Array.from(text);
+  const total = chars.length;
+  const active = inView && !paused;
+
   return (
     <span
       ref={containerRef}
-      className={`inline-flex overflow-hidden ${className}`}
+      className={`inline-flex overflow-visible ${className}`}
       aria-label={text}
     >
-      {chars.map((ch, idx) => (
-        <span
-          key={`${replayKey}-${idx}`}
-          aria-hidden="true"
-          style={{
-            opacity: inView ? 1 : 0.08,
-            transform: inView
-              ? 'translate3d(0, 0%, 0) scaleX(1)'
-              : 'translate3d(0, 24%, 0) scaleX(0.72)',
-            transitionProperty: 'opacity, transform',
-            transitionDuration: '0.42s',
-            transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
-            transitionDelay: inView ? `${(delayOffset + idx * stagger).toFixed(3)}s` : '0s',
-          }}
-          className="inline-block origin-left"
-        >
-          {ch === ' ' ? '\u00A0' : ch}
-        </span>
-      ))}
+      {chars.map((ch, idx) => {
+        const wave = computeSnakeLetterWave(idx, total, {
+          baseDelay: delayOffset,
+          stagger,
+          amplitudeY: 32,
+          maxTiltDeg: 8,
+        });
+        return (
+          <span
+            key={`${replayKey}-${idx}`}
+            aria-hidden="true"
+            style={
+              {
+                '--snake-entry-y': `${wave.entryYPercent}%`,
+                '--snake-crest-y': `${wave.crestYPercent}%`,
+                '--snake-entry-rot': `${wave.entryRotateDeg}deg`,
+                '--snake-crest-rot': `${wave.crestRotateDeg}deg`,
+                animationDelay: active ? `${wave.delaySec}s` : '0s',
+              } as React.CSSProperties
+            }
+            className={`inline-block origin-bottom ${
+              active ? 'snake-letter-active' : 'snake-letter-idle'
+            }`}
+          >
+            {ch === ' ' ? '\u00A0' : ch}
+          </span>
+        );
+      })}
     </span>
+  );
+}
+
+export function PortfolioIntroSplash({
+  isOpen,
+  onExitStart,
+  onComplete,
+}: {
+  isOpen: boolean;
+  onExitStart?: () => void;
+  onComplete: () => void;
+}) {
+  const [isExiting, setIsExiting] = useState<boolean>(false);
+  const finishedRef = useRef<boolean>(false);
+  const exitTimerRef = useRef<number | null>(null);
+  const progressTextRef = useRef<HTMLSpanElement | null>(null);
+  const progressBarRef = useRef<HTMLDivElement | null>(null);
+  const onExitStartRef = useRef(onExitStart);
+  const onCompleteRef = useRef(onComplete);
+
+  useEffect(() => {
+    onExitStartRef.current = onExitStart;
+    onCompleteRef.current = onComplete;
+  }, [onExitStart, onComplete]);
+
+  const triggerExit = React.useCallback(() => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    if (progressTextRef.current) {
+      progressTextRef.current.textContent = '100%';
+    }
+    if (progressBarRef.current) {
+      progressBarRef.current.style.transform = 'scaleX(1)';
+    }
+    document.body.style.overflow = '';
+    setIsExiting(true);
+    if (onExitStartRef.current) onExitStartRef.current();
+    exitTimerRef.current = window.setTimeout(() => {
+      onCompleteRef.current();
+    }, 360);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) {
+      finishedRef.current = false;
+      setIsExiting(false);
+      document.body.style.overflow = '';
+      return;
+    }
+
+    if (finishedRef.current) return;
+
+    setIsExiting(false);
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.body.style.overflow = 'hidden';
+
+    const duration = INTRO_SPLASH_CONFIG.durationMs;
+    const startTime = performance.now();
+    let rafId: number | null = null;
+    let lastPct = -1;
+
+    const tick = (now: number) => {
+      if (finishedRef.current) return;
+      const elapsed = now - startTime;
+      const ratio = Math.min(1, elapsed / duration);
+      const pct = Math.round(ratio * 100);
+
+      if (progressBarRef.current) {
+        progressBarRef.current.style.transform = `scaleX(${ratio.toFixed(4)})`;
+      }
+      if (pct !== lastPct && progressTextRef.current) {
+        lastPct = pct;
+        progressTextRef.current.textContent = `${String(pct).padStart(2, '0')}%`;
+      }
+
+      if (ratio < 1) {
+        rafId = window.requestAnimationFrame(tick);
+      } else {
+        triggerExit();
+      }
+    };
+
+    rafId = window.requestAnimationFrame(tick);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+        triggerExit();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      if (rafId !== null) window.cancelAnimationFrame(rafId);
+      if (exitTimerRef.current !== null) {
+        window.clearTimeout(exitTimerRef.current);
+        exitTimerRef.current = null;
+      }
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, triggerExit]);
+
+  if (!isOpen) return null;
+
+  const primaryChars = Array.from(INTRO_SPLASH_CONFIG.primaryWord);
+  const secondaryChars = Array.from(INTRO_SPLASH_CONFIG.secondaryWord);
+
+  return (
+    <div
+      data-testid="portfolio-intro-splash"
+      role="region"
+      aria-label="Rohit Sahani Portfolio opening animation"
+      onClick={triggerExit}
+      style={{
+        transform: isExiting ? 'translate3d(0, -100%, 0)' : 'translate3d(0, 0, 0)',
+        opacity: isExiting ? 0 : 1,
+        transition:
+          'transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.32s cubic-bezier(0.22, 1, 0.36, 1)',
+      }}
+      className={`fixed inset-0 z-[70] bg-[#07070a] text-white flex flex-col justify-between p-6 sm:p-10 md:p-14 overflow-hidden select-none cursor-pointer will-change-transform ${
+        isExiting ? 'pointer-events-none' : ''
+      }`}
+    >
+      {/* Subtle Architectural Backdrop Grid & Crimson Glow */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] sm:w-[560px] sm:h-[560px] rounded-full bg-[#b81d2a]/20 blur-3xl" />
+        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-white/[0.06]" />
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-white/[0.06]" />
+      </div>
+
+      {/* Top Row: Brand Identity & Skip Intro Control */}
+      <div className="relative z-10 flex items-center justify-between gap-4">
+        <div className="inline-flex items-center font-display text-xl sm:text-2xl tracking-[-0.02em] leading-none whitespace-nowrap">
+          <span>ROHIT</span>
+          <RohitBrandMark className="w-4 h-4 mx-1" />
+          <span>SAHANI</span>
+        </div>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            triggerExit();
+          }}
+          className="px-4 py-2 rounded-full border border-white/25 bg-white/[0.04] hover:bg-[#b81d2a] hover:border-[#b81d2a] text-xs font-mono tracking-[0.2em] uppercase text-white transition-colors cursor-pointer whitespace-nowrap shrink-0"
+        >
+          SKIP INTRO ↗
+        </button>
+      </div>
+
+      {/* Center Stage: Sinusoidal Snake Wave Path + Aesthetic "PORTFOLIO" Word */}
+      <div className="relative z-10 my-auto flex flex-col items-center justify-center text-center py-8">
+        {/* Sinuous SVG Snake-Wave Ribbon Behind Typography */}
+        <svg
+          viewBox="0 0 1000 220"
+          fill="none"
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[115%] max-w-[1180px] h-auto opacity-80"
+        >
+          <path
+            d="M 10 110 C 175 15, 335 205, 500 110 C 665 15, 825 205, 990 110"
+            stroke="url(#serpentGradient)"
+            strokeWidth="3"
+            strokeLinecap="round"
+            className="animate-serpent-path"
+          />
+          <defs>
+            <linearGradient id="serpentGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#b81d2a" stopOpacity="0.15" />
+              <stop offset="50%" stopColor="#e02432" stopOpacity="0.95" />
+              <stop offset="100%" stopColor="#ffffff" stopOpacity="0.35" />
+            </linearGradient>
+          </defs>
+        </svg>
+
+        {/* Secondary Kicker: ROHIT SAHANI */}
+        <div
+          className="text-xs sm:text-sm md:text-base font-condensed tracking-[0.36em] uppercase text-[#ff5a67] font-semibold mb-3 sm:mb-4 flex items-center justify-center"
+          aria-label={INTRO_SPLASH_CONFIG.secondaryWord}
+        >
+          {secondaryChars.map((ch, idx) => {
+            const wave = computeSnakeLetterWave(idx, secondaryChars.length, {
+              baseDelay: 0.02,
+              stagger: 0.03,
+              amplitudeY: 26,
+              maxTiltDeg: 7,
+            });
+            return (
+              <span
+                key={`sec-${idx}`}
+                aria-hidden="true"
+                style={
+                  {
+                    '--snake-entry-y': `${wave.entryYPercent}%`,
+                    '--snake-crest-y': `${wave.crestYPercent}%`,
+                    '--snake-entry-rot': `${wave.entryRotateDeg}deg`,
+                    '--snake-crest-rot': `${wave.crestRotateDeg}deg`,
+                    animationDelay: `${wave.delaySec}s`,
+                  } as React.CSSProperties
+                }
+                className="inline-block snake-letter-active"
+              >
+                {ch === ' ' ? '\u00A0' : ch}
+              </span>
+            );
+          })}
+        </div>
+
+        {/* Dominant Aesthetic Word: PORTFOLIO (One Letter at a Time Snake Wave) */}
+        <div
+          data-testid="intro-portfolio-word"
+          aria-label={INTRO_SPLASH_CONFIG.primaryWord}
+          className="font-display-tall text-[19vw] sm:text-[16.5vw] lg:text-[210px] uppercase tracking-[0.03em] leading-[0.86] text-white flex items-center justify-center overflow-visible py-2"
+        >
+          {primaryChars.map((ch, idx) => {
+            const wave = computeSnakeLetterWave(idx, primaryChars.length, {
+              baseDelay: 0.06,
+              stagger: INTRO_SPLASH_CONFIG.letterStaggerSec,
+              amplitudeY: 42,
+              maxTiltDeg: 10,
+            });
+            return (
+              <span
+                key={`pri-${idx}`}
+                data-testid={`intro-letter-${idx}`}
+                aria-hidden="true"
+                style={
+                  {
+                    '--snake-entry-y': `${wave.entryYPercent}%`,
+                    '--snake-crest-y': `${wave.crestYPercent}%`,
+                    '--snake-entry-rot': `${wave.entryRotateDeg}deg`,
+                    '--snake-crest-rot': `${wave.crestRotateDeg}deg`,
+                    animationDelay: `${wave.delaySec}s`,
+                  } as React.CSSProperties
+                }
+                className="inline-block origin-bottom intro-snake-letter-active px-[0.01em]"
+              >
+                {ch}
+              </span>
+            );
+          })}
+        </div>
+
+        {/* Discipline Subtitle */}
+        <p className="mt-4 sm:mt-5 text-[10px] sm:text-xs font-mono tracking-[0.26em] uppercase text-white/70">
+          {INTRO_SPLASH_CONFIG.subtitle}
+        </p>
+      </div>
+
+      {/* Bottom Row: Snake-Wave Progress Bar & Percentage Counter */}
+      <div className="relative z-10 space-y-2.5">
+        <div className="flex items-center justify-between text-[11px] font-mono tracking-[0.22em] uppercase text-white/70">
+          <span>BIRATNAGAR, NEPAL</span>
+          <span
+            ref={progressTextRef}
+            className="tabular-nums text-[#e02432] font-semibold"
+          >
+            00%
+          </span>
+        </div>
+        <div className="w-full h-[2px] bg-white/10 overflow-hidden">
+          <div
+            ref={progressBarRef}
+            style={{ transform: 'scaleX(0)' }}
+            className="w-full h-full bg-[#e02432] origin-left will-change-transform"
+          />
+        </div>
+      </div>
+    </div>
   );
 }
 

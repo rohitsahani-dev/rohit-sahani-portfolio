@@ -206,9 +206,12 @@ export function AboutCodeLiveBySection({
     }
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setCodeInView(entry.isIntersecting);
+        if (entry.isIntersecting) {
+          setCodeInView(true);
+          observer.disconnect();
+        }
       },
-      { threshold: 0.2 }
+      { threshold: 0.18 }
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -232,7 +235,7 @@ export function AboutCodeLiveBySection({
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, amount: 0.25 }}
+          viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5 }}
           className="lg:col-span-6 space-y-5"
         >
@@ -1123,7 +1126,10 @@ export function WorkTogetherInquirySection({
                   id="composer-name"
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (errors.name) setErrors((prev) => ({ ...prev, name: '' }));
+                  }}
                   placeholder="e.g. Aarav Sharma"
                   className="w-full bg-[#090b10] border border-white/12 focus:border-[#e63946] px-3.5 py-2.5 text-xs text-white placeholder:text-white/30 focus:outline-none"
                 />
@@ -1143,7 +1149,10 @@ export function WorkTogetherInquirySection({
                   id="composer-email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) setErrors((prev) => ({ ...prev, email: '' }));
+                  }}
                   placeholder="you@example.com"
                   className="w-full bg-[#090b10] border border-white/12 focus:border-[#e63946] px-3.5 py-2.5 text-xs text-white placeholder:text-white/30 focus:outline-none"
                 />
@@ -1164,7 +1173,10 @@ export function WorkTogetherInquirySection({
               <select
                 id="composer-topic"
                 value={topic}
-                onChange={(e) => setTopic(e.target.value)}
+                onChange={(e) => {
+                  setTopic(e.target.value);
+                  if (errors.subject) setErrors((prev) => ({ ...prev, subject: '' }));
+                }}
                 className="w-full bg-[#090b10] border border-white/12 focus:border-[#e63946] px-3.5 py-2.5 text-xs font-mono uppercase text-white focus:outline-none"
               >
                 {!['WEBSITE DEVELOPMENT', 'AI & LLM APPLICATION', 'RESTAURANT / HOSPITALITY SITE', 'LANDING PAGE & UI REDESIGN', 'GENERAL COLLABORATION'].includes(topic) && (
@@ -1192,7 +1204,10 @@ export function WorkTogetherInquirySection({
                 id="composer-details"
                 rows={4}
                 value={details}
-                onChange={(e) => setDetails(e.target.value)}
+                onChange={(e) => {
+                  setDetails(e.target.value);
+                  if (errors.message) setErrors((prev) => ({ ...prev, message: '' }));
+                }}
                 placeholder="Tell me about your website goals, timeline, or collaboration idea..."
                 className="w-full bg-[#090b10] border border-white/12 focus:border-[#e63946] p-3.5 text-xs text-white placeholder:text-white/30 focus:outline-none resize-y"
               />

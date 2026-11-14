@@ -63,6 +63,90 @@ html {
   will-change: transform;
 }
 
+@keyframes snake-letter-reveal {
+  0% {
+    opacity: 0;
+    transform: translate3d(-22%, var(--snake-entry-y, 34%), 0)
+      rotate(var(--snake-entry-rot, -8deg)) scale(0.78);
+    animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  }
+  52% {
+    opacity: 1;
+    transform: translate3d(4%, var(--snake-crest-y, -13%), 0)
+      rotate(var(--snake-crest-rot, 3.5deg)) scale(1.03);
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0%, 0) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes intro-snake-letter {
+  0% {
+    opacity: 0;
+    color: #e02432;
+    transform: translate3d(-26%, var(--snake-entry-y, 42%), 0)
+      rotate(var(--snake-entry-rot, -10deg)) scale(0.72);
+    animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  }
+  50% {
+    opacity: 1;
+    color: #ff5a67;
+    transform: translate3d(5%, var(--snake-crest-y, -16%), 0)
+      rotate(var(--snake-crest-rot, 5deg)) scale(1.05);
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  100% {
+    opacity: 1;
+    color: #ffffff;
+    transform: translate3d(0, 0%, 0) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes serpent-path-flow {
+  0% {
+    stroke-dashoffset: 1200;
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.85;
+  }
+}
+
+.snake-letter-idle {
+  opacity: 0;
+  transform: translate3d(-22%, var(--snake-entry-y, 34%), 0)
+    rotate(var(--snake-entry-rot, -8deg)) scale(0.78);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+.snake-letter-active {
+  animation-name: snake-letter-reveal;
+  animation-duration: 0.58s;
+  animation-fill-mode: both;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+.intro-snake-letter-active {
+  animation-name: intro-snake-letter;
+  animation-duration: 0.54s;
+  animation-fill-mode: both;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+.animate-serpent-path {
+  stroke-dasharray: 1200;
+  animation: serpent-path-flow 1.05s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 @media (pointer: fine) {
   .has-custom-cursor,
   .has-custom-cursor * {
@@ -76,8 +160,14 @@ html {
   }
   .animate-ribbon-left,
   .animate-ribbon-right,
-  .animate-spin-slow {
+  .animate-spin-slow,
+  .snake-letter-active,
+  .intro-snake-letter-active,
+  .animate-serpent-path {
     animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 }
+
 

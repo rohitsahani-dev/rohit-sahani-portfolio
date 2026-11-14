@@ -25,6 +25,7 @@ import {
   EditorialPortraitCollage,
   ProjectArchitecturePreview,
   StaggeredLetters,
+  PortfolioIntroSplash,
   ModernCustomCursor,
 } from './components/PortfolioVisuals';
 import {
@@ -48,6 +49,7 @@ import {
   filterProjectsByCategory,
   formatScrambleText,
   computeTourState,
+  resolveAssetPath,
 } from './utils/portfolioLogic';
 
 const SCRAMBLE_LEFT_FRAMES = ['B1R 4T ?', 'N3P 4L 0', 'L0C : NP', 'B1RATNGR', 'BIRATNAGAR'];
@@ -85,6 +87,16 @@ export default function App() {
   const [tourPercent, setTourPercent] = useState<number>(0);
   const [tourStageLabel, setTourStageLabel] = useState<string>('01 INTRO');
   const [replayKey, setReplayKey] = useState<number>(0);
+  const [isIntroSplashOpen, setIsIntroSplashOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const params = new URLSearchParams(window.location.search);
+    return params.get('autostart') !== '1';
+  });
+  const [isHeroLettersPaused, setIsHeroLettersPaused] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const params = new URLSearchParams(window.location.search);
+    return params.get('autostart') !== '1';
+  });
 
   const tourRafRef = useRef<number | null>(null);
   const isTouringRef = useRef<boolean>(false);
@@ -190,8 +202,14 @@ export default function App() {
     };
   }, []);
 
+  const scrambleTimerRef = useRef<number | null>(null);
+
   // Trigger slot-scramble effect when entering Section 04 Contact
   const runScrambleAnimation = () => {
+    if (scrambleTimerRef.current !== null) {
+      window.clearInterval(scrambleTimerRef.current);
+      scrambleTimerRef.current = null;
+    }
     setScrambleProgress(0);
     let frame = 0;
     const totalFrames = 16;
@@ -200,16 +218,33 @@ export default function App() {
       setScrambleProgress(frame / totalFrames);
       if (frame >= totalFrames) {
         window.clearInterval(timer);
+        if (scrambleTimerRef.current === timer) {
+          scrambleTimerRef.current = null;
+        }
       }
     }, 65);
+    scrambleTimerRef.current = timer;
     return timer;
   };
 
   useEffect(() => {
     if (activeSection !== 'contact') return;
     const timer = runScrambleAnimation();
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearInterval(timer);
+      if (scrambleTimerRef.current === timer) {
+        scrambleTimerRef.current = null;
+      }
+    };
   }, [activeSection]);
+
+  useEffect(() => {
+    return () => {
+      if (scrambleTimerRef.current !== null) {
+        window.clearInterval(scrambleTimerRef.current);
+      }
+    };
+  }, []);
 
   const scrollToSection = (id: SectionId) => {
     setActiveSection(id);
@@ -414,6 +449,16 @@ export default function App() {
   return (
     <div id="home" className="min-h-screen bg-[#ded8d5] p-0 sm:p-3 md:p-5 flex justify-center">
       <ModernCustomCursor />
+      <PortfolioIntroSplash
+        isOpen={isIntroSplashOpen}
+        onExitStart={() => {
+          setIsHeroLettersPaused(false);
+        }}
+        onComplete={() => {
+          setIsHeroLettersPaused(false);
+          setIsIntroSplashOpen(false);
+        }}
+      />
       {/* Main Framed Showcase Canvas preserving the original rounded cinema frame */}
       <div className="w-full max-w-[1360px] rounded-none sm:rounded-[34px] shadow-[0_32px_90px_rgba(0,0,0,0.35)] bg-[#f6f6f6] relative">
         {/* =====================================================================
@@ -610,19 +655,21 @@ export default function App() {
                     <span className="font-display text-sm sm:text-lg md:text-xl tracking-wide uppercase text-white/90 whitespace-nowrap">
                       <StaggeredLetters
                         text="ROHIT SAHANI"
-                        delayOffset={0.08}
-                        stagger={0.025}
+                        delayOffset={0.02}
+                        stagger={0.028}
                         replayKey={replayKey}
                         once={true}
+                        paused={isHeroLettersPaused}
                       />
                     </span>
                     <span className="font-display text-sm sm:text-lg md:text-xl tracking-wide uppercase text-white/75 whitespace-nowrap">
                       <StaggeredLetters
                         text="BIT STUDENT"
-                        delayOffset={0.16}
-                        stagger={0.025}
+                        delayOffset={0.06}
+                        stagger={0.028}
                         replayKey={replayKey}
                         once={true}
+                        paused={isHeroLettersPaused}
                       />
                     </span>
                   </div>
@@ -631,19 +678,21 @@ export default function App() {
                     <span className="font-display text-sm sm:text-lg md:text-xl tracking-wide uppercase text-white/75 whitespace-nowrap">
                       <StaggeredLetters
                         text="APPLIED AI LAB"
-                        delayOffset={0.24}
-                        stagger={0.025}
+                        delayOffset={0.1}
+                        stagger={0.028}
                         replayKey={replayKey}
                         once={true}
+                        paused={isHeroLettersPaused}
                       />
                     </span>
                     <span className="font-display text-sm sm:text-lg md:text-xl tracking-wide uppercase text-white/90 whitespace-nowrap">
                       <StaggeredLetters
                         text="WEB BUILDER"
-                        delayOffset={0.32}
-                        stagger={0.025}
+                        delayOffset={0.14}
+                        stagger={0.028}
                         replayKey={replayKey}
                         once={true}
+                        paused={isHeroLettersPaused}
                       />
                     </span>
                   </div>
@@ -666,19 +715,21 @@ export default function App() {
                       <span className="block text-[15vw] sm:text-[13.5vw] xl:text-[184px]">
                         <StaggeredLetters
                           text="BUILDING THE"
-                          delayOffset={0.04}
-                          stagger={0.045}
+                          delayOffset={0.02}
+                          stagger={0.042}
                           replayKey={replayKey}
                           once={true}
+                          paused={isHeroLettersPaused}
                         />
                       </span>
                       <span className="block text-[15.5vw] sm:text-[14vw] xl:text-[192px] text-white/95 mt-1">
                         <StaggeredLetters
                           text="FUTURE WITH AI."
-                          delayOffset={0.22}
-                          stagger={0.042}
+                          delayOffset={0.18}
+                          stagger={0.038}
                           replayKey={replayKey}
                           once={true}
+                          paused={isHeroLettersPaused}
                         />
                       </span>
                     </h1>
@@ -706,7 +757,7 @@ export default function App() {
                     className="absolute inset-x-0 bottom-[-10px] lg:bottom-[-14px] z-20 flex justify-center pointer-events-none will-change-transform"
                   >
                     <img
-                      src="/assets/rohit/rohit-portrait-hero.png"
+                      src={resolveAssetPath('/assets/rohit/rohit-portrait-hero.png')}
                       alt="Rohit Sahani — AI Engineer in Progress and Software Developer"
                       referrerPolicy="no-referrer"
                       className="w-[210px] sm:w-[275px] md:w-[355px] h-auto object-contain select-none drop-shadow-[0_24px_42px_rgba(0,0,0,0.88)]"
@@ -731,7 +782,7 @@ export default function App() {
                         </span>
                       </div>
                       <img
-                        src={PERSONAL_IDENTITY.portraits.suitEditorial}
+                        src={resolveAssetPath(PERSONAL_IDENTITY.portraits.suitEditorial)}
                         alt="Rohit Sahani editorial portrait"
                         referrerPolicy="no-referrer"
                         className="w-7 h-7 rounded-full object-cover object-top border border-[#b81d2a] shrink-0"
@@ -812,7 +863,7 @@ export default function App() {
                 <motion.div
                   initial={{ opacity: 0, x: -18 }}
                   whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: false, amount: 0.3 }}
+                  viewport={{ once: true, amount: 0.3 }}
                   transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                   className="lg:col-span-3 space-y-3"
                 >
@@ -875,7 +926,7 @@ export default function App() {
                           initial={{ opacity: 0, scale: 0.75, rotate: stage.rotation * 1.6 }}
                           whileInView={{ opacity: 1, scale: 1, rotate: stage.rotation }}
                           whileHover={{ rotate: 0, scale: 1.07 }}
-                          viewport={{ once: false, amount: 0.3 }}
+                          viewport={{ once: true, amount: 0.3 }}
                           transition={{
                             duration: 0.45,
                             delay: 0.05 + idx * 0.06,
@@ -917,7 +968,7 @@ export default function App() {
                 <motion.div
                   initial={{ opacity: 0, y: 14, filter: 'blur(5px)' }}
                   whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                  viewport={{ once: false, amount: 0.3 }}
+                  viewport={{ once: true, amount: 0.3 }}
                   transition={{ duration: 0.55, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
                   className="lg:col-span-3 flex flex-col justify-between items-start lg:items-end"
                 >
@@ -994,7 +1045,7 @@ export default function App() {
                       key={group.id}
                       initial={{ opacity: 0, y: 18 }}
                       whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: false, amount: 0.25 }}
+                      viewport={{ once: true, amount: 0.25 }}
                       transition={{ duration: 0.45 }}
                       className="rounded-2xl bg-[#121217] border border-white/10 p-5 flex flex-col justify-between hover:border-white/25 transition-colors"
                     >
@@ -1049,7 +1100,7 @@ export default function App() {
               {/* Studio Section 2: MY SKILLS — Technologies I Work With (10 Interactive Tech Tiles) */}
               <SkillsInteractiveGridSection
                 onInquireWithSkill={(skill) => {
-                  setContactInitialSubject(skill.inquireTopic);
+                  setContactInitialSubject(`${skill.inquireTopic} (${skill.name})`);
                   const target = document.getElementById('inquiry-composer');
                   if (target) {
                     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1063,7 +1114,7 @@ export default function App() {
               <motion.div
                 initial={{ opacity: 0, y: 28, scale: 0.9 }}
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                viewport={{ once: false, amount: 0.2 }}
+                viewport={{ once: true, amount: 0.2 }}
                 transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
                 className="absolute left-1/2 -translate-x-1/2 -bottom-24 md:-bottom-28 z-30 flex flex-col items-center"
               >
@@ -1093,7 +1144,7 @@ export default function App() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.92 }}
-                viewport={{ once: false, amount: 0.2 }}
+                viewport={{ once: true, amount: 0.2 }}
                 transition={{ duration: 0.4, delay: 0.1 }}
                 className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#b81d2a] hover:bg-[#d12231] active:bg-[#9e1622] text-white flex flex-col items-center justify-center shadow-xl absolute left-6 md:left-12 -bottom-8 md:-bottom-10 z-30 cursor-pointer select-none"
               >
@@ -1113,7 +1164,7 @@ export default function App() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.92 }}
-                viewport={{ once: false, amount: 0.2 }}
+                viewport={{ once: true, amount: 0.2 }}
                 transition={{ duration: 0.4, delay: 0.15 }}
                 className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white hover:bg-neutral-100 active:bg-neutral-200 text-[#b81d2a] flex flex-col items-center justify-center shadow-xl border border-black/10 absolute right-6 md:right-12 -bottom-8 md:-bottom-10 z-30 cursor-pointer select-none"
               >
@@ -1157,7 +1208,7 @@ export default function App() {
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: false, amount: 0.3 }}
+                  viewport={{ once: true, amount: 0.3 }}
                   transition={{ duration: 0.45 }}
                   className="flex justify-end mb-2 md:mb-0"
                 >
@@ -1263,7 +1314,7 @@ export default function App() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: false, amount: 0.25 }}
+                viewport={{ once: true, amount: 0.25 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                 className="mt-5 text-center relative z-10"
               >
@@ -1332,7 +1383,7 @@ export default function App() {
                 <motion.div
                   initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: false, amount: 0.25 }}
+                  viewport={{ once: true, amount: 0.25 }}
                   transition={{ duration: 0.5, delay: 0.08 }}
                   className="lg:col-span-4 flex flex-col justify-between"
                 >
@@ -1367,7 +1418,7 @@ export default function App() {
                 <motion.div
                   initial={{ opacity: 0, y: 32 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: false, amount: 0.25 }}
+                  viewport={{ once: true, amount: 0.25 }}
                   transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
                   className="lg:col-span-4 relative flex justify-center pb-14"
                 >
@@ -1466,12 +1517,12 @@ export default function App() {
                   <motion.div
                     initial={{ opacity: 0, y: 22, scale: 0.92 }}
                     whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                    viewport={{ once: false, amount: 0.25 }}
+                    viewport={{ once: true, amount: 0.25 }}
                     transition={{ duration: 0.55, delay: 0.14, ease: [0.16, 1, 0.3, 1] }}
                     className="w-24 h-28 sm:w-28 sm:h-32 rounded-2xl bg-[#09090b] border-2 border-[#b81d2a] overflow-hidden absolute -bottom-4 -right-2 sm:-right-6 z-30 shadow-2xl pointer-events-none select-none"
                   >
                     <img
-                      src={PERSONAL_IDENTITY.portraits.suitEditorial}
+                      src={resolveAssetPath(PERSONAL_IDENTITY.portraits.suitEditorial)}
                       alt="Rohit Sahani builder portrait in suit"
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover object-[center_35%] scale-115"
@@ -1483,7 +1534,7 @@ export default function App() {
                 <motion.div
                   initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: false, amount: 0.25 }}
+                  viewport={{ once: true, amount: 0.25 }}
                   transition={{ duration: 0.5, delay: 0.12 }}
                   className="lg:col-span-4 flex flex-col justify-between items-start lg:items-end"
                 >
@@ -1544,7 +1595,7 @@ export default function App() {
                       key={project.id}
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: false, amount: 0.2 }}
+                      viewport={{ once: true, amount: 0.2 }}
                       transition={{ duration: 0.45, delay: idx * 0.05 }}
                       className={`group rounded-2xl bg-white border border-black/10 hover:border-[#b81d2a] overflow-hidden flex flex-col justify-between transition-all shadow-xs hover:shadow-xl ${
                         (idx === 0 || idx === 6) && projectCategoryFilter === 'ALL'
@@ -1671,7 +1722,7 @@ export default function App() {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: false, amount: 0.4 }}
+                  viewport={{ once: true, amount: 0.4 }}
                   transition={{ duration: 0.45 }}
                   className="text-[10px] sm:text-xs tracking-[0.32em] uppercase text-[#b81d2a] font-semibold mb-2"
                 >
@@ -1778,7 +1829,7 @@ export default function App() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.88, y: 32 }}
                   whileInView={{ opacity: 1, scale: 1, y: 0 }}
-                  viewport={{ once: false, amount: 0.25 }}
+                  viewport={{ once: true, amount: 0.25 }}
                   transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
                   className="relative z-20 mt-5 pb-3 flex justify-center items-end"
                 >
@@ -1797,7 +1848,7 @@ export default function App() {
                     >
                       <div className="absolute inset-0 bg-gradient-to-b from-[#b81d2a]/25 via-transparent to-black/80" />
                       <img
-                        src={PERSONAL_IDENTITY.portraits.cleanCutout}
+                        src={resolveAssetPath(PERSONAL_IDENTITY.portraits.cleanCutout)}
                         alt="Rohit Sahani studio portrait"
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-cover object-top pt-2"
@@ -1815,7 +1866,7 @@ export default function App() {
                       className="relative z-20 w-[220px] sm:w-[250px] md:w-[275px] h-[285px] sm:h-[325px] md:h-[355px] rounded-t-[140px] rounded-b-3xl bg-[#0d0d11] border-4 border-white overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.28)] cursor-pointer group"
                     >
                       <img
-                        src={PERSONAL_IDENTITY.portraits.suitEditorial}
+                        src={resolveAssetPath(PERSONAL_IDENTITY.portraits.suitEditorial)}
                         alt="Rohit Sahani — AI Engineer in Progress, Biratnagar, Nepal"
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-cover object-[center_42%] scale-115 group-hover:scale-120 transition-transform duration-500"

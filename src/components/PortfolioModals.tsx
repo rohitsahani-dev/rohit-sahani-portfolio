@@ -16,6 +16,7 @@ import {
   PERSONAL_IDENTITY,
   PortfolioProject,
   validateContactForm,
+  resolveAssetPath,
 } from '../utils/portfolioLogic';
 import { LabNodeMiniIcon, ProjectArchitecturePreview } from './PortfolioVisuals';
 
@@ -50,6 +51,14 @@ export function ContactModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [confirmedRef, setConfirmedRef] = useState<string | null>(null);
   const [copiedEmail, setCopiedEmail] = useState(false);
+
+  React.useEffect(() => {
+    if (isOpen && initialSubject) {
+      setSubject(initialSubject);
+      setConfirmedRef(null);
+      setErrors({});
+    }
+  }, [isOpen, initialSubject]);
 
   React.useEffect(() => {
     if (!isOpen) return;
@@ -117,7 +126,7 @@ export function ContactModal({
 
         <div className="flex items-center gap-3 mb-3">
           <img
-            src={PERSONAL_IDENTITY.portraits.suitEditorial}
+            src={resolveAssetPath(PERSONAL_IDENTITY.portraits.suitEditorial)}
             alt="Rohit Sahani"
             referrerPolicy="no-referrer"
             className="w-11 h-11 rounded-full object-cover object-top border border-[#b81d2a]"
@@ -246,7 +255,10 @@ export function ContactModal({
                 1. SELECT COLLABORATION TOPIC
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {INQUIRY_TOPICS.map((topic) => {
+                {(INQUIRY_TOPICS.includes(subject)
+                  ? INQUIRY_TOPICS
+                  : [subject, ...INQUIRY_TOPICS.slice(0, 2)]
+                ).map((topic) => {
                   const active = subject === topic;
                   return (
                     <button

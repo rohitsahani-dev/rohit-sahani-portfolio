@@ -71,6 +71,14 @@ export const PERSONAL_IDENTITY = {
   },
 };
 
+export function resolveAssetPath(path: string): string {
+  if (!path) return path;
+  if (path.startsWith('/assets/')) {
+    return `.${path}`;
+  }
+  return path;
+}
+
 export const HERO_MARQUEE_ITEMS = ['AI', 'SOFTWARE', 'AUTOMATION', 'DEVELOPMENT'];
 
 export const SKILL_GROUPS: SkillGroup[] = [
@@ -812,6 +820,61 @@ export function generateEmailQrMatrix(
   return { payload, size, cells };
 }
 
+export interface SnakeLetterWaveSpec {
+  index: number;
+  delaySec: number;
+  phaseRad: number;
+  entryYPercent: number;
+  crestYPercent: number;
+  entryRotateDeg: number;
+  crestRotateDeg: number;
+}
 
+export const INTRO_SPLASH_CONFIG = {
+  primaryWord: 'PORTFOLIO',
+  secondaryWord: 'ROHIT SAHANI',
+  subtitle: 'AI ENGINEER · SOFTWARE DEVELOPER · CREATIVE BUILDER',
+  durationMs: 1450,
+  letterStaggerSec: 0.068,
+};
 
+export function computeSnakeLetterWave(
+  index: number,
+  total: number,
+  options?: {
+    baseDelay?: number;
+    stagger?: number;
+    amplitudeY?: number;
+    maxTiltDeg?: number;
+  }
+): SnakeLetterWaveSpec {
+  const safeIndex = Math.max(0, index);
+  const safeTotal = Math.max(1, total);
+  const baseDelay = options?.baseDelay ?? 0;
+  const stagger = options?.stagger ?? 0.048;
+  const amplitudeY = options?.amplitudeY ?? 34;
+  const maxTiltDeg = options?.maxTiltDeg ?? 9;
+
+  // Sinusoidal phase along the word so consecutive letters form a travelling snake wave
+  const wavelength = Math.min(6, Math.max(3.5, safeTotal * 0.45));
+  const phaseRad = (safeIndex / wavelength) * Math.PI * 2;
+  const waveSin = Math.sin(phaseRad);
+  const waveCos = Math.cos(phaseRad);
+
+  const entryYPercent = Math.round((amplitudeY + waveSin * (amplitudeY * 0.55)) * 10) / 10;
+  const crestYPercent = Math.round((-amplitudeY * 0.38 + waveCos * (amplitudeY * 0.28)) * 10) / 10;
+  const entryRotateDeg = Math.round(waveCos * -maxTiltDeg * 10) / 10;
+  const crestRotateDeg = Math.round(waveSin * (maxTiltDeg * 0.45) * 10) / 10;
+  const delaySec = Math.round((baseDelay + safeIndex * stagger) * 1000) / 1000;
+
+  return {
+    index: safeIndex,
+    delaySec,
+    phaseRad,
+    entryYPercent,
+    crestYPercent,
+    entryRotateDeg,
+    crestRotateDeg,
+  };
+}
 

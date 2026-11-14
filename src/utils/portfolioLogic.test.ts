@@ -19,6 +19,9 @@ import {
   QUICK_SCOPE_PRESETS,
   computeScrollProgressPercent,
   generateEmailQrMatrix,
+  resolveAssetPath,
+  INTRO_SPLASH_CONFIG,
+  computeSnakeLetterWave,
 } from './portfolioLogic';
 
 test('PERSONAL_IDENTITY and SKILL_GROUPS match Rohit Sahani requirements', () => {
@@ -185,6 +188,33 @@ test('generateEmailQrMatrix creates a real ISO QR matrix for rohit.sahani.dev@gm
   assert.equal(qr.cells[6][0], true);
   assert.equal(qr.cells[3][3], true);
 });
+
+test('resolveAssetPath converts leading /assets/ paths to relative ./assets/ paths', () => {
+  assert.equal(
+    resolveAssetPath('/assets/rohit/rohit-portrait-hero.png'),
+    './assets/rohit/rohit-portrait-hero.png'
+  );
+  assert.equal(
+    resolveAssetPath('./assets/rohit/rohit-portrait-hero.png'),
+    './assets/rohit/rohit-portrait-hero.png'
+  );
+  assert.equal(resolveAssetPath('https://example.com/img.png'), 'https://example.com/img.png');
+});
+
+test('INTRO_SPLASH_CONFIG and computeSnakeLetterWave produce smooth sequential snake wave timings and phases', () => {
+  assert.equal(INTRO_SPLASH_CONFIG.primaryWord, 'PORTFOLIO');
+  assert.equal(INTRO_SPLASH_CONFIG.secondaryWord, 'ROHIT SAHANI');
+  const first = computeSnakeLetterWave(0, 9, { baseDelay: 0.1, stagger: 0.05 });
+  const second = computeSnakeLetterWave(1, 9, { baseDelay: 0.1, stagger: 0.05 });
+  const third = computeSnakeLetterWave(2, 9, { baseDelay: 0.1, stagger: 0.05 });
+  assert.equal(first.delaySec, 0.1);
+  assert.equal(second.delaySec, 0.15);
+  assert.equal(third.delaySec, 0.2);
+  assert.ok(second.phaseRad > first.phaseRad);
+  assert.notEqual(first.entryYPercent, second.entryYPercent);
+});
+
+
 
 
 
