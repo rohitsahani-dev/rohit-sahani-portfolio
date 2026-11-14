@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
+import { Analytics } from '@vercel/analytics/react';
 import {
   ArrowUpRight,
   Github,
@@ -1908,6 +1909,7 @@ export default function App() {
           }}
         />
       </div>
+      <Analytics />
     </div>
   );
 }
