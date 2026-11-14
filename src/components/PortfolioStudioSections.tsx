@@ -1372,40 +1372,84 @@ export function ScrollTopProgressButton() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleRailClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickRatio = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+    const maxScroll =
+      Math.max(
+        document.documentElement.scrollHeight,
+        document.body ? document.body.scrollHeight : 0
+      ) - window.innerHeight;
+    window.scrollTo({ top: Math.round(clickRatio * maxScroll), behavior: 'smooth' });
+  };
+
   return (
-    <div className="fixed bottom-5 right-5 z-50">
-      <button
-        type="button"
-        onClick={handleScrollToTop}
-        aria-label={`Scroll to top (${progress}% scrolled)`}
-        className="group relative bg-[#0c0e14]/95 hover:bg-[#131620] text-white border border-white/15 hover:border-[#e63946]/60 px-4 py-2.5 flex items-center gap-3 shadow-[0_12px_32px_rgba(0,0,0,0.65)] backdrop-blur-md transition-colors cursor-pointer overflow-hidden"
+    <>
+      {/* Sleek Interactive Side Scroll Rail (Right Edge) */}
+      <div
+        className="fixed right-2.5 top-1/2 -translate-y-1/2 z-40 hidden lg:flex flex-col items-center gap-2 select-none"
+        aria-hidden="true"
       >
-        {/* Top Edge Live Scroll Progress Bar */}
-        <span
-          className="pointer-events-none absolute top-0 left-0 right-0 h-[2.5px] bg-white/10"
-          aria-hidden="true"
+        <span className="font-mono text-[9px] tracking-[0.18em] text-[#b81d2a] font-bold tabular-nums">
+          {String(progress).padStart(2, '0')}%
+        </span>
+
+        <div
+          onClick={handleRailClick}
+          title="Click to jump along page"
+          className="group relative w-2 h-44 rounded-full bg-[#09090b]/85 border border-white/15 shadow-[0_8px_24px_rgba(0,0,0,0.45)] backdrop-blur-xs cursor-pointer overflow-hidden p-[1.5px]"
         >
-          <span
-            data-testid="scroll-top-progress-bar"
-            style={{ width: `${progress}%` }}
-            className="block h-full bg-[#e63946] transition-[width] duration-75"
+          {/* Section tick marks at 0%, 33%, 66%, 100% */}
+          <span className="pointer-events-none absolute inset-x-0 top-[33%] h-px bg-white/15" />
+          <span className="pointer-events-none absolute inset-x-0 top-[66%] h-px bg-white/15" />
+
+          {/* Live Crimson Scroll Fill */}
+          <div
+            style={{ height: `${Math.max(6, progress)}%` }}
+            className="w-full rounded-full bg-gradient-to-b from-[#b81d2a] via-[#e02432] to-[#ff4d5a] shadow-[0_0_12px_rgba(224,36,50,0.8)] transition-[height] duration-75"
           />
-        </span>
+        </div>
 
-        <span className="font-mono text-[11px] tracking-[0.22em] uppercase text-white/90">
-          TOP
+        <span className="writing-vertical rotate-180 font-mono text-[8px] tracking-[0.24em] uppercase text-[#09090b]/70 font-semibold">
+          SCROLL
         </span>
+      </div>
 
-        <span className="font-mono text-[10px] text-[#e63946] min-w-[28px] text-right">
-          {progress}%
-        </span>
+      {/* Bottom-Right Scroll To Top Progress Pill */}
+      <div className="fixed bottom-5 right-5 z-50">
+        <button
+          type="button"
+          onClick={handleScrollToTop}
+          aria-label={`Scroll to top (${progress}% scrolled)`}
+          className="group relative rounded-xl bg-[#0c0e14]/95 hover:bg-[#131620] text-white border border-white/15 hover:border-[#e63946]/60 px-4 py-2.5 flex items-center gap-3 shadow-[0_12px_32px_rgba(0,0,0,0.65)] backdrop-blur-md transition-colors cursor-pointer overflow-hidden"
+        >
+          {/* Top Edge Live Scroll Progress Bar */}
+          <span
+            className="pointer-events-none absolute top-0 left-0 right-0 h-[2.5px] bg-white/10"
+            aria-hidden="true"
+          >
+            <span
+              data-testid="scroll-top-progress-bar"
+              style={{ width: `${progress}%` }}
+              className="block h-full bg-[#e63946] transition-[width] duration-75"
+            />
+          </span>
 
-        <span className="h-3.5 w-px bg-white/15" aria-hidden="true" />
+          <span className="font-mono text-[11px] tracking-[0.22em] uppercase text-white/90">
+            TOP
+          </span>
 
-        <span className="w-6 h-6 border border-[#e63946]/45 group-hover:border-[#e63946] group-hover:bg-[#e63946] text-[#e63946] group-hover:text-white flex items-center justify-center transition-colors">
-          <ArrowUp className="w-3.5 h-3.5" />
-        </span>
-      </button>
-    </div>
+          <span className="font-mono text-[10px] text-[#e63946] min-w-[28px] text-right tabular-nums">
+            {progress}%
+          </span>
+
+          <span className="h-3.5 w-px bg-white/15" aria-hidden="true" />
+
+          <span className="w-6 h-6 rounded-md border border-[#e63946]/45 group-hover:border-[#e63946] group-hover:bg-[#e63946] text-[#e63946] group-hover:text-white flex items-center justify-center transition-colors">
+            <ArrowUp className="w-3.5 h-3.5" />
+          </span>
+        </button>
+      </div>
+    </>
   );
 }

@@ -114,7 +114,7 @@ export function ContactModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative w-full max-w-xl rounded-3xl bg-[#111115] border border-white/15 text-white p-6 md:p-8 shadow-2xl overflow-y-auto max-h-[90vh]">
+      <div className="relative w-full max-w-xl rounded-3xl bg-[#111115] border border-white/15 text-white p-6 md:p-8 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar">
         <button
           type="button"
           onClick={onClose}
@@ -421,7 +421,7 @@ export function ProjectDetailModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative w-full max-w-2xl rounded-3xl bg-[#0d0d11] border border-white/15 p-6 md:p-8 text-white shadow-2xl overflow-y-auto max-h-[90vh]">
+      <div className="relative w-full max-w-2xl rounded-3xl bg-[#0d0d11] border border-white/15 p-6 md:p-8 text-white shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
             <LabNodeMiniIcon size={18} />

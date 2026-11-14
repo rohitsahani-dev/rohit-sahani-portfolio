@@ -8,6 +8,81 @@
 
 html {
   font-family: var(--font-sans);
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #c81e2b #09090b;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+/* Custom Editorial Scrollbars (Window, Modals, Code Blocks & Textareas) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #09090b;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #b81d2a 0%, #e02432 100%);
+  border-radius: 9999px;
+  border: 2px solid #09090b;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #e02432 0%, #ff4d5a 100%);
+  border: 1.5px solid #09090b;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #ff4d5a;
+}
+
+::-webkit-scrollbar-corner {
+  background: #09090b;
+}
+
+/* Refined thin scrollbar for inner containers, modals, code blocks, and textareas */
+pre,
+textarea,
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #c81e2b rgba(255, 255, 255, 0.04);
+}
+
+pre::-webkit-scrollbar,
+textarea::-webkit-scrollbar,
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+pre::-webkit-scrollbar-track,
+textarea::-webkit-scrollbar-track,
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 9999px;
+  border-left: none;
+}
+
+pre::-webkit-scrollbar-thumb,
+textarea::-webkit-scrollbar-thumb,
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(200, 30, 43, 0.85);
+  border-radius: 9999px;
+  border: none;
+}
+
+pre::-webkit-scrollbar-thumb:hover,
+textarea::-webkit-scrollbar-thumb:hover,
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #e02432;
 }
 
 .font-display-tall {
